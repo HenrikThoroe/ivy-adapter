@@ -50,11 +50,11 @@ var crossStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 // View composes the TUI view based on the current state of the view model.
 func (m model) View() string {
 	if !m.isLoading {
-		m.bar.Clear()
-		m.bar.Exit()
+		clearProgressBar(m.bar)
 	}
 
 	if m.err != nil {
+		clearProgressBar(m.bar)
 		return crossStyle.Render("✘ ") + errorStyle.Render(m.err.Error()) + "\n"
 	}
 
@@ -63,6 +63,7 @@ func (m model) View() string {
 	}
 
 	if m.selected != nil {
+		clearProgressBar(m.bar)
 		prompt := "Downloaded " + m.selected.Engine + " @ " + m.selected.Version.String(mgmt.DotVersionStyle)
 
 		return checkMarkStyle.Render("✔ ") +
@@ -74,6 +75,12 @@ func (m model) View() string {
 		"\n" +
 		baseStyle.Render(applyTableStyles(&m.table).View()) +
 		"\n"
+}
+
+// clearProgressBar removes the progress bar from the screen.
+func clearProgressBar(bar *progressbar.ProgressBar) {
+	bar.Clear()
+	bar.Exit()
 }
 
 // applyTableStyles applies styles to the table.
