@@ -17,7 +17,7 @@ var mvreq_io_table = []mvreq_io{
 			Key:         "move-request",
 			PlayerColor: "white",
 			Moves:       []string{"e2e4", "e7e5"},
-			Time: time{
+			Time: time_t{
 				White: 300,
 				Black: 300,
 			},
@@ -29,7 +29,7 @@ var mvreq_io_table = []mvreq_io{
 			Key:         "move-request",
 			PlayerColor: "white",
 			Moves:       []string{},
-			Time: time{
+			Time: time_t{
 				White: 300,
 				Black: 300,
 			},
@@ -41,7 +41,7 @@ var mvreq_io_table = []mvreq_io{
 			Key:         "move-request",
 			PlayerColor: "white",
 			Moves:       []string{},
-			Time: time{
+			Time: time_t{
 				White: 5400000,
 				Black: 5400000,
 			},
