@@ -3,6 +3,7 @@ package com
 import (
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/conf"
 	"github.com/gorilla/websocket"
@@ -18,6 +19,9 @@ type Client struct {
 
 	// Errors is a channel that distributes any errors that occur during the connection.
 	Errors chan error
+
+	// ping is the last measured ping to the server.
+	ping int64
 }
 
 // Connect establishes a connection to the game management server based on the configuration in the environment.
@@ -31,25 +35,52 @@ func Connect() (*Client, error) {
 		return nil, err
 	}
 
-	go handleReceive(msgChan, errChan, conn)
-	go handleSend(cmdChan, errChan, conn)
-
-	return &Client{
+	client := Client{
 		Messages: msgChan,
 		Commands: cmdChan,
 		Errors:   errChan,
-	}, nil
+		ping:     -1,
+	}
+
+	go handleReceive(msgChan, errChan, conn)
+	go handleSend(cmdChan, errChan, conn, &client.ping)
+
+	return &client, nil
 }
 
-func handleSend(cmdChan chan Command, errChan chan error, conn *websocket.Conn) {
+// Ping returns the last measured ping to the server.
+// If the ping is not yet measured, it will be measured and returned.
+func (c Client) Ping() int64 {
+	if c.ping < 0 {
+		start := time.Now().UnixMilli()
+		c.Commands <- BuildPingCmd()
+		resp := <-c.Messages
+
+		if _, ok := resp.(PongMsg); !ok {
+			return -1
+		}
+
+		end := time.Now().UnixMilli()
+
+		return end - start
+	}
+
+	return c.ping
+}
+
+func handleSend(cmdChan chan Command, errChan chan error, conn *websocket.Conn, ping *int64) {
 	for {
 		cmd := <-cmdChan
 		message := cmd.Encode()
+		start := time.Now().UnixMilli()
 
 		if err := conn.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
 			errChan <- err
 			continue
 		}
+
+		end := time.Now().UnixMilli()
+		*ping = end - start
 	}
 }
 
