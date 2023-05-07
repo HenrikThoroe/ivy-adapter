@@ -120,3 +120,18 @@ func ParseVersion(ver string, style VersionStyle) (*Version, error) {
 
 	return &version, nil
 }
+
+// ParseEngineInstance parses an engine instance string and returns an EngineInstance struct.
+// The version string must be in dot format. See ParseVersion and VersionStyle for more information.
+func ParseEngineInstance(name string, version string) (*EngineInstance, error) {
+	ver, err := ParseVersion(version, DotVersionStyle)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &EngineInstance{
+		Engine:  name,
+		Version: *ver,
+	}, nil
+}
