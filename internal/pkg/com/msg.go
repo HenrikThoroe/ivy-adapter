@@ -5,7 +5,7 @@ import (
 	"errors"
 )
 
-type time struct {
+type time_t struct {
 	White int `json:"white"`
 	Black int `json:"black"`
 }
@@ -16,8 +16,7 @@ type MoveRequestMsg struct {
 	Key         string   `json:"key"`
 	PlayerColor string   `json:"playerColor"`
 	Moves       []string `json:"moves"`
-	Time        time     `json:"time"`
-	State       string   `json:"state"`
+	Time        time_t   `json:"time"`
 }
 
 // PlayerInfoMsg is a message sent by the server to inform the client about
@@ -35,8 +34,10 @@ type GameStateMsg struct {
 	Key         string   `json:"key"`
 	PlayerColor string   `json:"playerColor"`
 	Moves       []string `json:"moves"`
-	Time        time     `json:"time"`
+	Time        time_t   `json:"time"`
 	State       string   `json:"state"`
+	Winner      string   `json:"winner"`
+	Reason      string   `json:"reason"`
 }
 
 // ErrorMsg is a message sent by the server to inform the client about an
