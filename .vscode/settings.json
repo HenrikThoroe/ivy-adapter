@@ -1,0 +1,13 @@
+{
+  "editor.formatOnSave": true,
+  "conventionalCommits.scopes": [
+    "conf",
+    "mgmt",
+    "instl",
+    "com",
+    "uci",
+    "run",
+    "global",
+    "docs"
+  ]
+}
