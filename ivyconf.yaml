@@ -11,3 +11,7 @@ game-manager:
   host: localhost
   port: 4501
   secure: false
+test:
+  host: localhost
+  port: 4504
+  secure: false

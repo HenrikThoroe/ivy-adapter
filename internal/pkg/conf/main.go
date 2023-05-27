@@ -35,6 +35,7 @@ var (
 	evc         ServerConfig // Configuration of the server which provides the engine version control.
 	gameServer  ServerConfig // Configuration of the server which provides the game server.
 	gameManager ServerConfig // Configuration of the server which provides the game manager.
+	test        ServerConfig // Configuration of the server which provides the test server.
 	engineStore string       // The path to the directory where the engines are stored.
 )
 
@@ -55,6 +56,7 @@ func Load() {
 	initServerConfig(&evc, "evc", "localhost", 4500, false)
 	initServerConfig(&gameServer, "game", "localhost", 4502, false)
 	initServerConfig(&gameManager, "game-manager", "localhost", 4501, false)
+	initServerConfig(&test, "test", "localhost", 4504, false)
 
 	engineStore = viper.GetString("engine-store")
 
@@ -71,6 +73,11 @@ func Load() {
 
 		engineStore = base + "/engines"
 	}
+}
+
+// GetTestServerConfig returns the configuration of the server which provides the test server.
+func GetTestServerConfig() *ServerConfig {
+	return &test
 }
 
 // GetEngineStore returns the path to the directory where the engines are stored.
@@ -101,7 +108,7 @@ func GetGameManagerConfig() *ServerConfig {
 func (sc *ServerConfig) GetURL() string {
 	protocol := "http"
 
-	if sc == &gameServer {
+	if sc == &gameServer || sc == &test {
 		protocol = "ws"
 	}
 
@@ -113,7 +120,7 @@ func (sc *ServerConfig) GetURL() string {
 }
 
 // initServerConfig initializes the configuration of a server.
-// The configuration is loaded using viper idetified by the prefix.
+// The configuration is loaded using viper identified by the prefix.
 func initServerConfig(sc *ServerConfig, prefix string, defHost string, defPort int, defSec bool) {
 	viper.SetDefault(prefix+".host", defHost)
 	viper.SetDefault(prefix+".port", defPort)
