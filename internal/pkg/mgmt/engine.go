@@ -5,6 +5,7 @@ package mgmt
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -72,6 +73,12 @@ func (inst EngineInstance) FileName() string {
 // The conf package is used to determine the engine store location.
 func (inst EngineInstance) Path() string {
 	return filepath.Join(conf.GetEngineStore(), inst.FileName())
+}
+
+// IsInstalled returns whether the engine instance is installed.
+func (inst EngineInstance) IsInstalled() bool {
+	_, err := os.Stat(inst.Path())
+	return err == nil
 }
 
 // URL returns the URL to the engine instance on the EVC server.
