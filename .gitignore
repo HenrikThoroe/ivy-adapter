@@ -14,5 +14,17 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# Platform-specific files
+*.idea
+*.iml
+*.ipr
+*.iws
+*.DS_Store
+*.bak
+*.orig
+*.patch
+*.diff
+
+# development
 /.dev
 /build
