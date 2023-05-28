@@ -3,6 +3,7 @@ package sys
 import (
 	"crypto/sha256"
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 
@@ -20,27 +21,27 @@ type DeviceIdentifier struct {
 
 // CPU contains information about the CPU(s) of a device.
 type CPU struct {
-	Cores   int    `json:"cores"`   // The number of cores of the CPU.
-	Model   string `json:"model"`   // The model of the CPU.
-	Vendor  string `json:"vendor"`  // The vendor of the CPU.
-	Threads int    `json:"threads"` // The number of threads of the CPU.
+	Cores   int    `json:"cores,omitempty"`   // The number of cores of the CPU.
+	Model   string `json:"model"`             // The model of the CPU.
+	Vendor  string `json:"vendor"`            // The vendor of the CPU.
+	Threads int    `json:"threads,omitempty"` // The number of threads of the CPU.
 }
 
 // GPU contains information about the GPU(s) of a device.
 type GPU struct {
-	Model  string `json:"model"`  // The model of the GPU.
-	Vendor string `json:"vendor"` // The vendor of the GPU.
-	Memory int    `json:"memory"` // The memory of the GPU in bytes.
+	Model  string `json:"model"`            // The model of the GPU.
+	Vendor string `json:"vendor"`           // The vendor of the GPU.
+	Memory int    `json:"memory,omitempty"` // The memory of the GPU in bytes.
 }
 
 // Device contains information about a device.
 type Device struct {
-	Cpu    []CPU  `json:"cpu"`    // The CPU(s) of the device.
-	Memory int    `json:"memory"` // The memory of the device in bytes.
-	Gpu    []GPU  `json:"gpu"`    // The GPU(s) of the device.
-	Model  string `json:"model"`  // The model of the device.
-	OS     string `json:"os"`     // The operating system of the device.
-	Arch   string `json:"arch"`   // The architecture of the device.
+	Cpu    []CPU  `json:"cpu"`              // The CPU(s) of the device.
+	Memory int    `json:"memory,omitempty"` // The memory of the device in bytes.
+	Gpu    []GPU  `json:"gpu"`              // The GPU(s) of the device.
+	Model  string `json:"model"`            // The model of the device.
+	OS     string `json:"os"`               // The operating system of the device.
+	Arch   string `json:"arch"`             // The architecture of the device.
 }
 
 // DeviceInfo returns information about the device.
@@ -135,9 +136,16 @@ func loadHost(h *Device, name *string, id *string) {
 	h.OS = runtime.GOOS
 	h.Arch = runtime.GOARCH
 
+	if hn, err := os.Hostname(); err == nil && hn != "" {
+		*name = hn
+	}
+
 	if info, err := ghw.Product(); err == nil && info != nil {
 		h.Model = info.Name
-		*name = info.Name + " (" + info.Vendor + ")"
+
+		if *name == "" {
+			*name = info.Name + " (" + info.Vendor + ")"
+		}
 
 		if info.UUID != "" {
 			hash := sha256.New()
@@ -150,7 +158,10 @@ func loadHost(h *Device, name *string, id *string) {
 
 	if info, err := host.Info(); err == nil && info != nil {
 		h.Model = info.PlatformFamily + " " + info.PlatformVersion + " (" + info.OS + ")"
-		*name = info.Hostname
+
+		if *name == "" {
+			*name = info.Hostname
+		}
 
 		if info.HostID != "" {
 			hash := sha256.New()
