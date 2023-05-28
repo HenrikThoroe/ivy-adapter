@@ -1,9 +1,92 @@
 package uci
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 )
+
+func readUntil(parts []string, start int, key ...string) []string {
+	res := make([]string, 0)
+	n := len(parts)
+
+	for idx := start; idx < n; idx++ {
+		part := parts[idx]
+
+		for _, k := range key {
+			if part == k {
+				return res
+			}
+		}
+
+		res = append(res, part)
+	}
+
+	return res
+}
+
+func parseOptionConfigStr(info string) (OptionConfig, error) {
+	parts := strings.Split(info, " ")
+	res := OptionConfig{Var: make([]string, 0)}
+	idx := 1
+	keys := []string{"type", "min", "max", "default", "name", "var", "value"}
+
+	if len(parts) < 3 {
+		return res, errors.New("invalid option config string")
+	}
+
+	for idx < len(parts)-1 {
+		part := parts[idx]
+
+		if part == "type" {
+			next := parts[idx+1]
+			res.Type = OptionType(next)
+			idx += 1
+
+			if res.Type != Check && res.Type != Spin && res.Type != Combo && res.Type != Button && res.Type != String {
+				return res, errors.New("invalid option type")
+			}
+		} else if part == "min" {
+			next := parts[idx+1]
+			idx += 1
+
+			if i, e := strconv.Atoi(next); e == nil {
+				res.Min = i
+			} else {
+				return res, errors.New("invalid option min value")
+			}
+		} else if part == "max" {
+			next := parts[idx+1]
+			idx += 1
+
+			if i, e := strconv.Atoi(next); e == nil {
+				res.Max = i
+			} else {
+				return res, errors.New("invalid option max value")
+			}
+		} else if part == "default" {
+			buf := readUntil(parts, idx+1, keys...)
+			res.Def = strings.Join(buf, " ")
+			idx += len(buf)
+		} else if part == "name" {
+			buf := readUntil(parts, idx+1, keys...)
+			res.Name = strings.Join(buf, " ")
+			idx += len(buf)
+		} else if part == "var" {
+			buf := readUntil(parts, idx+1, keys...)
+			res.Var = append(res.Var, strings.Join(buf, " "))
+			idx += len(buf)
+		} else {
+			return res, errors.New("invalid option config string")
+		}
+	}
+
+	if res.Name == "" || res.Type == "" {
+		return res, errors.New("invalid option config string")
+	}
+
+	return res, nil
+}
 
 func parseInfoStr(info string) *MoveInfo {
 	parts := strings.Split(info, " ")

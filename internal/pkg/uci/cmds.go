@@ -6,9 +6,23 @@ import (
 )
 
 // Setup sends the uci command to the engine and waits for the uciok response.
+// It also parses the response for option configurations and saves them in
+// the UCI struct.
 func (u *UCI) Setup() {
 	u.header = u.engine.Line()
-	u.engine.Expect("uci", "uciok")
+	u.engine.Send("uci")
+
+	u.engine.Scan("uciok", func(line string) bool {
+		if strings.HasPrefix(line, "option") {
+			opt, e := parseOptionConfigStr(line)
+
+			if e == nil {
+				u.options = append(u.options, opt)
+			}
+		}
+
+		return line == "uciok"
+	})
 }
 
 // Start sends the ucinewgame command to the engine.
@@ -68,4 +82,9 @@ func (u *UCI) IsEngineReady() bool {
 	resp := u.engine.Line()
 
 	return resp == "readyok"
+}
+
+// SetOption sends the setoption command to the engine with the given option.
+func (u *UCI) SetOption(option Option) {
+	u.engine.Send("setoption name " + option.Name + " value " + option.Value)
 }
