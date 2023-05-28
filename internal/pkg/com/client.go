@@ -2,12 +2,17 @@ package com
 
 import (
 	"encoding/json"
-	"errors"
 	"time"
 
-	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/conf"
 	"github.com/gorilla/websocket"
 )
+
+// Flow is an interface that is used to parse messages sent by the server.
+// Differnt flows are used for different types of messages.
+type Flow interface {
+	// Parse parses a message from the server.
+	Parse(key string, data []byte) (any, error)
+}
 
 // Client represents a connection to the game management server.
 type Client struct {
@@ -22,14 +27,17 @@ type Client struct {
 
 	// ping is the last measured ping to the server.
 	ping int64
+
+	// flow is the flow that is used to parse messages.
+	flow Flow
 }
 
 // Connect establishes a connection to the game management server based on the configuration in the environment.
-func Connect() (*Client, error) {
-	msgChan := make(chan any)
+func Connect(url string, flow Flow) (*Client, error) {
+	msgChan := make(chan any, 2)
 	cmdChan := make(chan Command)
 	errChan := make(chan error)
-	conn, _, err := websocket.DefaultDialer.Dial(conf.GetGameServerConfig().GetURL(), nil)
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 
 	if err != nil {
 		return nil, err
@@ -40,29 +48,20 @@ func Connect() (*Client, error) {
 		Commands: cmdChan,
 		Errors:   errChan,
 		ping:     -1,
+		flow:     flow,
 	}
 
-	go handleReceive(msgChan, errChan, conn)
+	go handleReceive(msgChan, errChan, conn, flow)
 	go handleSend(cmdChan, errChan, conn, &client.ping)
 
 	return &client, nil
 }
 
 // Ping returns the last measured ping to the server.
-// If the ping is not yet measured, it will be measured and returned.
+// If the ping is not yet measured, 0 is returned.
 func (c Client) Ping() int64 {
 	if c.ping < 0 {
-		start := time.Now().UnixMilli()
-		c.Commands <- BuildPingCmd()
-		resp := <-c.Messages
-
-		if _, ok := resp.(PongMsg); !ok {
-			return -1
-		}
-
-		end := time.Now().UnixMilli()
-
-		return end - start
+		return 0
 	}
 
 	return c.ping
@@ -84,7 +83,7 @@ func handleSend(cmdChan chan Command, errChan chan error, conn *websocket.Conn, 
 	}
 }
 
-func handleReceive(msgChan chan any, errChan chan error, conn *websocket.Conn) {
+func handleReceive(msgChan chan any, errChan chan error, conn *websocket.Conn, flow Flow) {
 	for {
 		_, message, err := conn.ReadMessage()
 
@@ -101,23 +100,7 @@ func handleReceive(msgChan chan any, errChan chan error, conn *websocket.Conn) {
 		}
 
 		key := data["key"]
-		var e error
-		var d any
-
-		switch key {
-		case "move-request":
-			d, e = parseMoveRequestMsg(string(message))
-		case "player-info":
-			d, e = parsePlayerInfoMsg(string(message))
-		case "game-state":
-			d, e = parseGameStateMsg(string(message))
-		case "error":
-			d, e = parseErrorMsg(string(message))
-		case "pong":
-			d, e = parsePongMsg(string(message))
-		default:
-			e = errors.New("Received message with unknown key attribute")
-		}
+		d, e := flow.Parse(key.(string), message)
 
 		if e != nil {
 			errChan <- e
