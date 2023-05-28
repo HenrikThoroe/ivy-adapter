@@ -8,6 +8,8 @@
     "uci",
     "run",
     "global",
-    "docs"
+    "docs",
+    "sys",
+    "test"
   ]
 }
