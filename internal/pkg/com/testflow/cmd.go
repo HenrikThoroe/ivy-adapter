@@ -8,14 +8,19 @@ import (
 	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/uci"
 )
 
+// GameMoveHistory is a slice of moves for a single game.
 type GameMoveHistory [][]uci.MoveInfo
 
+// ReportCmd is a struct that represents a report command.
+// This command is used to report the results of a batch of games.
 type ReportCmd struct {
 	Key     string            `json:"command"`
 	Session string            `json:"session"`
 	Moves   []GameMoveHistory `json:"moves"`
 }
 
+// RegisterCmd is a struct that represents a register command.
+// This command is used to register a test driver.
 type RegisterCmd struct {
 	Key      string     `json:"command"`
 	Name     string     `json:"name"`
@@ -23,14 +28,18 @@ type RegisterCmd struct {
 	Hardware sys.Device `json:"hardware"`
 }
 
+// Encode returns a string representation of the command.
 func (c RegisterCmd) Encode() string {
 	return encode(c)
 }
 
+// Encode returns a string representation of the command.
 func (c ReportCmd) Encode() string {
 	return encode(c)
 }
 
+// BuildRegisterCmd returns a RegisterCmd.
+// It automatically fills in the name, device id and hardware fields.
 func BuildRegisterCmd() RegisterCmd {
 	hardware, identifier := sys.DeviceInfo()
 
@@ -42,6 +51,7 @@ func BuildRegisterCmd() RegisterCmd {
 	}
 }
 
+// BuildReportCmd returns a ReportCmd with the given parameters.
 func BuildReportCmd(session string, moves []GameMoveHistory) ReportCmd {
 	return ReportCmd{
 		Key:     "report",

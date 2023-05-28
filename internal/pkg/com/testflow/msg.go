@@ -62,11 +62,13 @@ func parse[T any](data []byte) (T, error) {
 	return m, err
 }
 
+// RegisteredMsg is a message sent by the server to confirm the registration.
 type RegisteredMsg struct {
 	Key string `json:"key"`
 	Id  string `json:"id"`
 }
 
+// StartMsg is a message sent by the server to start a game or a batch of games.
 type StartMsg struct {
 	Key                  string  `json:"key"`
 	Session              string  `json:"session"`
