@@ -1,4 +1,4 @@
-package com
+package playflow
 
 import (
 	"reflect"
@@ -50,8 +50,9 @@ var mvreq_io_table = []mvreq_io{
 }
 
 func TestParseMoveRequest(t *testing.T) {
+	flow := NewFlow()
 	for _, io := range mvreq_io_table {
-		msg, err := parseMoveRequestMsg(io.msg)
+		msg, err := flow.Parse("move-request", []byte(io.msg))
 
 		if err != nil {
 			t.Error(err)
