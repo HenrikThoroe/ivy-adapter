@@ -2,6 +2,8 @@ package run
 
 import (
 	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/com"
+	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/com/playflow"
+	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/conf"
 	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/mgmt"
 	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/uci"
 )
@@ -38,7 +40,7 @@ func initModel(g string, c string, e *mgmt.EngineInstance) *model {
 	}
 
 	updates := make(chan bool)
-	client, err := com.Connect()
+	client, err := com.Connect(conf.GetGameServerConfig().GetURL(), playflow.NewFlow())
 
 	return &model{
 		gameData: &data{engine: engine, client: client, err: err},

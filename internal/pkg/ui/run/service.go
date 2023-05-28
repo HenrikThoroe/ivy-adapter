@@ -3,21 +3,21 @@ package run
 import (
 	"errors"
 
-	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/com"
+	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/com/playflow"
 )
 
 func (m *model) loop() {
-	reg := com.BuildRegisterCmd(m.game, m.color)
+	reg := playflow.BuildRegisterCmd(m.game, m.color)
 
 	m.gameData.client.Commands <- reg
 
 	resp := <-m.gameData.client.Messages
 
-	if info, ok := resp.(com.PlayerInfoMsg); ok {
+	if info, ok := resp.(playflow.PlayerInfoMsg); ok {
 		m.gameData.player = info.Player
 		m.update <- true
 	} else {
-		m.gameData.err = errors.New("Did not receive player information")
+		m.gameData.err = errors.New("did not receive player information")
 		m.update <- true
 		return
 	}
@@ -25,22 +25,22 @@ func (m *model) loop() {
 	for {
 		msg := <-m.gameData.client.Messages
 
-		switch msg.(type) {
-		case com.MoveRequestMsg:
-			m.handleMoveRequest(msg.(com.MoveRequestMsg))
-		case com.GameStateMsg:
-			m.gameData.moves = msg.(com.GameStateMsg).Moves
-			m.gameData.wtime = msg.(com.GameStateMsg).Time.White
-			m.gameData.btime = msg.(com.GameStateMsg).Time.Black
+		switch msg := msg.(type) {
+		case playflow.MoveRequestMsg:
+			m.handleMoveRequest(msg)
+		case playflow.GameStateMsg:
+			m.gameData.moves = msg.Moves
+			m.gameData.wtime = msg.Time.White
+			m.gameData.btime = msg.Time.Black
 
-			if msg.(com.GameStateMsg).State != "active" {
-				m.gameData.winner = msg.(com.GameStateMsg).Winner
-				m.gameData.reason = msg.(com.GameStateMsg).Reason
+			if msg.State != "active" {
+				m.gameData.winner = msg.Winner
+				m.gameData.reason = msg.Reason
 				m.update <- true
 				return
 			}
-		case com.ErrorMsg:
-			m.gameData.err = errors.New("(Server Error) " + msg.(com.ErrorMsg).Message)
+		case playflow.ErrorMsg:
+			m.gameData.err = errors.New("(Server Error) " + msg.Message)
 		default:
 			return
 		}
@@ -49,9 +49,9 @@ func (m *model) loop() {
 	}
 }
 
-func (m *model) handleMoveRequest(msg com.MoveRequestMsg) {
+func (m *model) handleMoveRequest(msg playflow.MoveRequestMsg) {
 	if msg.PlayerColor != m.color {
-		m.gameData.err = errors.New("Received move request for wrong color")
+		m.gameData.err = errors.New("received move request for wrong color")
 		m.update <- true
 		return
 	}
@@ -65,7 +65,7 @@ func (m *model) handleMoveRequest(msg com.MoveRequestMsg) {
 	m.gameData.ttm = m.getMoveTime(remaining, len(msg.Moves))
 	m.gameData.engine.SetMoves(msg.Moves...)
 	info := m.gameData.engine.GetMove(m.gameData.ttm)
-	m.gameData.client.Commands <- com.BuildMoveCmd(m.game, m.gameData.player, info.Move)
+	m.gameData.client.Commands <- playflow.BuildMoveCmd(m.game, m.gameData.player, info.Move)
 }
 
 func (m *model) getMoveTime(remaining int, moveCount int) int {
