@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/HenrikThoroe/ivy-adapter/internal/app/run"
 	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/conf"
 	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/mgmt"
-	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/ui/run"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )

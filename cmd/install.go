@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/HenrikThoroe/ivy-adapter/internal/app/instl"
 	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/conf"
-	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/ui/instl"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
