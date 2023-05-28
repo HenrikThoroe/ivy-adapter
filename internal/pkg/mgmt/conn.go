@@ -6,12 +6,13 @@ package mgmt
 type Connection struct {
 	in  chan string
 	out chan string
+	Pid int
 }
 
 // NewConnection creates a new connection between the adapter and the engine.
 // It returns a pointer to the connection.
-func NewConnection(in chan string, out chan string) *Connection {
-	return &Connection{in, out}
+func NewConnection(pid int, in chan string, out chan string) *Connection {
+	return &Connection{in, out, pid}
 }
 
 // Expect sends a command to the engine and waits for a confirmation. If the
@@ -22,16 +23,15 @@ func (conn *Connection) Expect(cmd string, cnf string) []string {
 
 	conn.in <- cmd
 
-	for {
-		select {
-		case resp := <-conn.out:
-			if resp == cnf {
-				return result
-			}
-
-			result = append(result, resp)
+	for resp := range conn.out {
+		if resp == cnf {
+			return result
 		}
+
+		result = append(result, resp)
 	}
+
+	return []string{}
 }
 
 // Send sends a command to the engine.
@@ -51,12 +51,9 @@ func (conn *Connection) Line() string {
 func (conn *Connection) Scan(cmd string, filter func(resp string) bool) {
 	conn.in <- cmd
 
-	for {
-		select {
-		case resp := <-conn.out:
-			if filter(resp) {
-				return
-			}
+	for resp := range conn.out {
+		if filter(resp) {
+			return
 		}
 	}
 }

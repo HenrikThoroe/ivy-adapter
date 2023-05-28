@@ -23,22 +23,19 @@ func (e *EngineInstance) Launch() (*Connection, error) {
 		return nil, e
 	}
 
-	return bind(in, out, inPipe, outPipe), nil
+	return bind(proc.Process.Pid, in, out, inPipe, outPipe), nil
 }
 
-func bind(in chan string, out chan string, wr io.Writer, rd io.Reader) *Connection {
+func bind(pid int, in chan string, out chan string, wr io.Writer, rd io.Reader) *Connection {
 	go distribute(in, wr)
 	go listen(rd, out)
 
-	return &Connection{in, out}
+	return &Connection{in, out, pid}
 }
 
 func distribute(in chan string, wr io.Writer) {
-	for {
-		select {
-		case cmd := <-in:
-			wr.Write([]byte(cmd + "\n"))
-		}
+	for cmd := range in {
+		wr.Write([]byte(cmd + "\n"))
 	}
 }
 
