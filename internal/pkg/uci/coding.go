@@ -32,7 +32,7 @@ func parseOptionConfigStr(info string) (OptionConfig, error) {
 	keys := []string{"type", "min", "max", "default", "name", "var", "value"}
 
 	if len(parts) < 3 {
-		return res, errors.New("invalid option config string")
+		return res, errors.New("invalid option. option is too short")
 	}
 
 	for idx < len(parts)-1 {
@@ -41,14 +41,14 @@ func parseOptionConfigStr(info string) (OptionConfig, error) {
 		if part == "type" {
 			next := parts[idx+1]
 			res.Type = OptionType(next)
-			idx += 1
+			idx += 2
 
 			if res.Type != Check && res.Type != Spin && res.Type != Combo && res.Type != Button && res.Type != String {
 				return res, errors.New("invalid option type")
 			}
 		} else if part == "min" {
 			next := parts[idx+1]
-			idx += 1
+			idx += 2
 
 			if i, e := strconv.Atoi(next); e == nil {
 				res.Min = i
@@ -57,7 +57,7 @@ func parseOptionConfigStr(info string) (OptionConfig, error) {
 			}
 		} else if part == "max" {
 			next := parts[idx+1]
-			idx += 1
+			idx += 2
 
 			if i, e := strconv.Atoi(next); e == nil {
 				res.Max = i
@@ -67,22 +67,22 @@ func parseOptionConfigStr(info string) (OptionConfig, error) {
 		} else if part == "default" {
 			buf := readUntil(parts, idx+1, keys...)
 			res.Def = strings.Join(buf, " ")
-			idx += len(buf)
+			idx += len(buf) + 1
 		} else if part == "name" {
 			buf := readUntil(parts, idx+1, keys...)
 			res.Name = strings.Join(buf, " ")
-			idx += len(buf)
+			idx += len(buf) + 1
 		} else if part == "var" {
 			buf := readUntil(parts, idx+1, keys...)
 			res.Var = append(res.Var, strings.Join(buf, " "))
-			idx += len(buf)
+			idx += len(buf) + 1
 		} else {
-			return res, errors.New("invalid option config string")
+			return res, errors.New("invalid option config string. unknown key '" + part + "' in '" + info + "'")
 		}
 	}
 
 	if res.Name == "" || res.Type == "" {
-		return res, errors.New("invalid option config string")
+		return res, errors.New("invalid option config string. name or type is missing")
 	}
 
 	return res, nil
