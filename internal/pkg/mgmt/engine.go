@@ -15,15 +15,27 @@ import (
 
 // Version is a struct that represents a version of a game engine.
 type Version struct {
-	Major int
-	Minor int
-	Patch int
+	Major int `json:"major"`
+	Minor int `json:"minor"`
+	Patch int `json:"patch"`
+}
+
+type Flavour struct {
+	Id           string   `json:"id"`
+	Os           string   `json:"os"`
+	Arch         string   `json:"arch"`
+	Capabilities []string `json:"capabilities"`
+}
+
+type Variation struct {
+	Version  Version   `json:"version"`
+	Flavours []Flavour `json:"flavours"`
 }
 
 // Engine is a struct that represents a game engine.
 type Engine struct {
-	Name     string
-	Versions []Version
+	Name       string      `json:"name"`
+	Variations []Variation `json:"variations"`
 }
 
 // EngineInstance is a struct that represents a specific instance of a game engine.
@@ -31,6 +43,7 @@ type Engine struct {
 type EngineInstance struct {
 	Engine  string
 	Version Version
+	Id      string
 }
 
 // VersionStyle is an enum that represents the style of a version string.
@@ -54,11 +67,16 @@ func (v *Version) String(style VersionStyle) string {
 
 // GetInstances returns a slice of EngineInstance structs that represent all the versions of the engine.
 func (e *Engine) GetInstances() []EngineInstance {
-	instances := make([]EngineInstance, len(e.Versions))
+	instances := make([]EngineInstance, 0)
 
-	for i, v := range e.Versions {
-		instances[i].Engine = e.Name
-		instances[i].Version = v
+	for _, v := range e.Variations {
+		for _, f := range v.Flavours {
+			instances = append(instances, EngineInstance{
+				Engine:  e.Name,
+				Version: v.Version,
+				Id:      f.Id,
+			})
+		}
 	}
 
 	return instances
@@ -66,7 +84,7 @@ func (e *Engine) GetInstances() []EngineInstance {
 
 // FileName returns the file name of the engine instance.
 func (inst EngineInstance) FileName() string {
-	return inst.Engine + "-" + inst.Version.String(UrlSaveVersionStyle)
+	return inst.Engine + "_" + inst.Version.String(UrlSaveVersionStyle) + "_" + inst.Id
 }
 
 // Path returns the path to the engine instance.
@@ -83,7 +101,7 @@ func (inst EngineInstance) IsInstalled() bool {
 
 // URL returns the URL to the engine instance on the EVC server.
 func (inst EngineInstance) URL() string {
-	return conf.GetEVCConfig().GetURL() + "/engines/" + inst.Engine + "/" + inst.Version.String(UrlSaveVersionStyle)
+	return conf.GetEVCConfig().GetURL() + "/engines/bin/" + inst.Engine + "/" + inst.Id
 }
 
 // ParseVersion parses a version string and returns a Version struct.
@@ -128,17 +146,6 @@ func ParseVersion(ver string, style VersionStyle) (*Version, error) {
 	return &version, nil
 }
 
-// ParseEngineInstance parses an engine instance string and returns an EngineInstance struct.
-// The version string must be in dot format. See ParseVersion and VersionStyle for more information.
-func ParseEngineInstance(name string, version string) (*EngineInstance, error) {
-	ver, err := ParseVersion(version, DotVersionStyle)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &EngineInstance{
-		Engine:  name,
-		Version: *ver,
-	}, nil
+func (v Version) Equals(other Version) bool {
+	return v.Major == other.Major && v.Minor == other.Minor && v.Patch == other.Patch
 }
