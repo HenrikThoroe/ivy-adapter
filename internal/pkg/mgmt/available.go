@@ -5,20 +5,85 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/conf"
+	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/sys"
+	"golang.org/x/exp/slices"
 )
 
-// version represents an engine version as sent by the EVC backend.
-type version struct {
-	ID   string `json:"id"`
-	Path string `json:"path"`
-}
+type versionCache map[Version]*EngineInstance
+type engineCache map[string]versionCache
 
-// engine represents an engine as sent by the EVC backend.
-type engine struct {
-	Name     string    `json:"name"`
-	Versions []version `json:"versions"`
+var cache engineCache = make(engineCache)
+
+func BestMatch(name string, version Version) (*EngineInstance, error) {
+	if cache[name] == nil {
+		cache[name] = make(versionCache)
+	}
+
+	if cache[name][version] != nil {
+		return cache[name][version], nil
+	}
+
+	engines, err := GetAvailableEngines(name)
+	device, _ := sys.DeviceInfo()
+	var capabilities []string
+
+	if len(device.Cpu) > 0 {
+		capabilities = device.Cpu[0].Capabilities
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, engine := range *engines {
+		for _, vari := range engine.Variations {
+			if !version.Equals(vari.Version) {
+				continue
+			}
+
+			max := -1
+			inst := &EngineInstance{}
+
+			for _, flav := range vari.Flavours {
+				if flav.Os != device.OS || flav.Arch != device.Arch {
+					continue
+				}
+
+				counter := 0
+
+				for _, cap := range capabilities {
+					if slices.Contains(flav.Capabilities, strings.ToLower(cap)) {
+						counter++
+					}
+				}
+
+				//? Require that all capabilities of the engine are met
+				if counter < len(flav.Capabilities) {
+					continue
+				}
+
+				//? Select the engine with the most capabilities
+				if counter > max {
+					max = counter
+					inst = &EngineInstance{
+						Engine:  engine.Name,
+						Version: vari.Version,
+						Id:      flav.Id,
+					}
+				}
+			}
+
+			if max > -1 {
+				cache[engine.Name][inst.Version] = inst
+				return inst, nil
+			}
+		}
+	}
+
+	return nil, errors.New("could not find engine")
 }
 
 // GetEngineInstance returns an EngineInstance for the given engine and version.
@@ -57,7 +122,7 @@ func GetAvailableEngines(defaultEngine string) (*[]Engine, error) {
 		return nil, errors.New("Could not download file: " + resp.Status)
 	}
 
-	var body []engine
+	var engines []Engine
 
 	data, err := io.ReadAll(resp.Body)
 
@@ -66,53 +131,12 @@ func GetAvailableEngines(defaultEngine string) (*[]Engine, error) {
 	}
 
 	if hasDefaultEngine {
-		var engine engine
+		var engine Engine
 		json.Unmarshal(data, &engine)
-		body = append(body, engine)
+		engines = append(engines, engine)
 	} else {
-		json.Unmarshal(data, &body)
-	}
-
-	engines := make([]Engine, len(body))
-
-	for i, e := range body {
-		err := parseEngine(&e, &engines[i])
-
-		if err != nil {
-			return nil, err
-		}
+		json.Unmarshal(data, &engines)
 	}
 
 	return &engines, nil
-}
-
-// parseEngine parses an engine from the EVC backend.
-// It returns an error if the engine could not be parsed.
-// The data is read from the given engine and written to the given target.
-func parseEngine(eng *engine, target *Engine) error {
-	target.Versions = make([]Version, len(eng.Versions))
-	target.Name = eng.Name
-
-	err := parseVersions(eng.Versions, target)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// parseVersions parses a list of versions of an engine.
-func parseVersions(vers []version, target *Engine) error {
-	for i, v := range vers {
-		parsed, err := ParseVersion(v.ID, DotVersionStyle)
-
-		if err != nil {
-			return err
-		}
-
-		target.Versions[i] = *parsed
-	}
-
-	return nil
 }
