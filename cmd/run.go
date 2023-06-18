@@ -30,10 +30,17 @@ var runCmd = &cobra.Command{
 		"Use q or ctrl+c to exit at any time.",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		eng, e := mgmt.ParseEngineInstance(runFlags.engine, runFlags.version)
+		version, vErr := mgmt.ParseVersion(runFlags.version, mgmt.DotVersionStyle)
 
-		if e != nil {
-			fmt.Println("Error parsing engine: ", e)
+		if vErr != nil {
+			fmt.Println("Error parsing version: ", vErr)
+			os.Exit(1)
+		}
+
+		eng, eErr := mgmt.BestMatch(runFlags.engine, *version)
+
+		if eErr != nil {
+			fmt.Println("Error parsing engine: ", eErr)
 			os.Exit(1)
 		}
 
