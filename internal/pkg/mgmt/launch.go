@@ -3,6 +3,7 @@ package mgmt
 import (
 	"bufio"
 	"io"
+	"os"
 	"os/exec"
 )
 
@@ -18,6 +19,8 @@ func (e *EngineInstance) Launch() (*Connection, error) {
 
 	in := make(chan string)
 	out := make(chan string)
+
+	os.Chmod(path, 0700)
 
 	if e := proc.Start(); e != nil {
 		return nil, e
