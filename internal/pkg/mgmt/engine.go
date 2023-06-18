@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -90,6 +91,10 @@ func (inst EngineInstance) FileName() string {
 // Path returns the path to the engine instance.
 // The conf package is used to determine the engine store location.
 func (inst EngineInstance) Path() string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(conf.GetEngineStore(), inst.FileName()+".exe")
+	}
+
 	return filepath.Join(conf.GetEngineStore(), inst.FileName())
 }
 
