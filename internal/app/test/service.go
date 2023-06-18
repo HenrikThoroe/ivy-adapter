@@ -69,17 +69,18 @@ func (ts testService) awaitGameStart() tea.Msg {
 
 			for idx, e := range sm.Suite.Engines {
 				mode := searchTime
-				engine := mgmt.EngineInstance{
-					Engine: e.Name,
-					Version: mgmt.Version{
-						Major: e.Version.Major,
-						Minor: e.Version.Minor,
-						Patch: e.Version.Patch,
-					},
+				engine, err := mgmt.BestMatch(e.Name, mgmt.Version{
+					Major: e.Version.Major,
+					Minor: e.Version.Minor,
+					Patch: e.Version.Patch,
+				})
+
+				if err != nil {
+					return err
 				}
 
 				if !engine.IsInstalled() {
-					if err := mgmt.DownloadEngine(&engine); err != nil {
+					if err := mgmt.DownloadEngine(engine); err != nil {
 						return err
 					}
 				}
@@ -93,7 +94,7 @@ func (ts testService) awaitGameStart() tea.Msg {
 					return errors.New("invalid search type")
 				}
 
-				result.engines[idx] = engine
+				result.engines[idx] = *engine
 				result.search[idx] = search{
 					mode:  mode,
 					value: e.Time.Value,
