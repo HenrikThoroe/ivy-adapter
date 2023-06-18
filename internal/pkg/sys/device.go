@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/jaypipes/ghw"
-	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/klauspost/cpuid/v2"
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/mem"
 )
@@ -21,10 +21,11 @@ type DeviceIdentifier struct {
 
 // CPU contains information about the CPU(s) of a device.
 type CPU struct {
-	Cores   int    `json:"cores,omitempty"`   // The number of cores of the CPU.
-	Model   string `json:"model"`             // The model of the CPU.
-	Vendor  string `json:"vendor"`            // The vendor of the CPU.
-	Threads int    `json:"threads,omitempty"` // The number of threads of the CPU.
+	Cores        int      `json:"cores,omitempty"`        // The number of cores of the CPU.
+	Model        string   `json:"model"`                  // The model of the CPU.
+	Vendor       string   `json:"vendor"`                 // The vendor of the CPU.
+	Threads      int      `json:"threads,omitempty"`      // The number of threads of the CPU.
+	Capabilities []string `json:"capabilities,omitempty"` // The capabilities of the CPU.
 }
 
 // GPU contains information about the GPU(s) of a device.
@@ -89,35 +90,13 @@ func loadGPU(h *Device) {
 }
 
 func loadCPU(h *Device) {
-	if info, err := ghw.CPU(); err == nil && info != nil {
-		for _, proc := range info.Processors {
-			if proc == nil {
-				continue
-			}
-
-			h.Cpu = append(h.Cpu, CPU{
-				Cores:   int(proc.NumCores),
-				Model:   proc.Model,
-				Vendor:  proc.Vendor,
-				Threads: int(proc.NumThreads),
-			})
-		}
-
-		return
-	}
-
-	if info, err := cpu.Info(); err == nil && info != nil {
-		for _, proc := range info {
-			h.Cpu = append(h.Cpu, CPU{
-				Cores:   int(proc.Cores),
-				Model:   proc.ModelName,
-				Vendor:  proc.VendorID,
-				Threads: int(proc.Cores),
-			})
-		}
-
-		return
-	}
+	h.Cpu = append(h.Cpu, CPU{
+		Cores:        cpuid.CPU.PhysicalCores,
+		Model:        cpuid.CPU.BrandName,
+		Vendor:       cpuid.CPU.VendorString,
+		Threads:      cpuid.CPU.LogicalCores,
+		Capabilities: cpuid.CPU.FeatureSet(),
+	})
 }
 
 func loadMemory(h *Device) {
