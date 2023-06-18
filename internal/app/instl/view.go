@@ -64,7 +64,7 @@ func (m model) View() string {
 
 	if m.selected != nil {
 		clearProgressBar(m.bar)
-		prompt := "Downloaded " + m.selected.Engine + " @ " + m.selected.Version.String(mgmt.DotVersionStyle)
+		prompt := "Downloaded " + m.selected.name + " @ " + m.selected.version.String(mgmt.DotVersionStyle)
 
 		return checkMarkStyle.Render("✔ ") +
 			promptStyle.Render(prompt) +
@@ -86,8 +86,9 @@ func clearProgressBar(bar *progressbar.ProgressBar) {
 // applyTableStyles applies styles to the table.
 func applyTableStyles(t *table.Model) *table.Model {
 	tableStyle := table.DefaultStyles()
-	tableStyle.Header = headerStyle
+	tableStyle.Header = headerStyle.Padding(0, 1)
 	tableStyle.Selected = selectedStyle
+	tableStyle.Cell = lipgloss.NewStyle().Padding(0, 1)
 	t.SetStyles(tableStyle)
 	return t
 }

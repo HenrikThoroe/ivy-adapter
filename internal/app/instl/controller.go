@@ -2,6 +2,7 @@ package instl
 
 import (
 	"math"
+	"strings"
 	"time"
 
 	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/mgmt"
@@ -11,7 +12,7 @@ import (
 
 // engineUpdateMsg is a message that is sent when the available engines are updated.
 type engineUpdateMsg struct {
-	engines []mgmt.EngineInstance
+	engines []engineInstance
 }
 
 // engineDownloadedMsg is a message that is sent when an engine has been downloaded.
@@ -32,7 +33,7 @@ func (m model) Init() tea.Cmd {
 		return tea.Batch(tick(), downloadEngine(m.selected))
 	}
 
-	return tea.Batch(tick(), fetchEngineConfig(m.defaultEngine))
+	return tea.Batch(tick(), fetchEngineConfig(m.defaultEngine, m.defaultVersion))
 }
 
 // Update updates the view model.
@@ -84,13 +85,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func setAvailableEngines(m *model, msg *engineUpdateMsg) {
 	rows := make([]table.Row, len(msg.engines))
 	m.table.SetColumns([]table.Column{
-		{Title: "Engine", Width: 20},
+		{Title: "Engine", Width: 15},
 		{Title: "Version", Width: 10},
+		{Title: "OS", Width: 10},
+		{Title: "Arch", Width: 10},
+		{Title: "Features", Width: 20},
 	})
 
 	for i, engine := range msg.engines {
 		rows[i] = table.Row{
-			engine.Engine, engine.Version.String(mgmt.DotVersionStyle),
+			engine.name,
+			engine.version.String(mgmt.DotVersionStyle),
+			engine.flavour.Os,
+			engine.flavour.Arch,
+			strings.Join(engine.flavour.Capabilities, ", "),
 		}
 	}
 

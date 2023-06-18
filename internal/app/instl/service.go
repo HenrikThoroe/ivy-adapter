@@ -7,9 +7,15 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type engineInstance struct {
+	name    string
+	version mgmt.Version
+	flavour mgmt.Flavour
+}
+
 // fetchEngineConfig creates a command that fetches the available engines and
 // returns an engineUpdateMsg with the result.
-func fetchEngineConfig(engine string) tea.Cmd {
+func fetchEngineConfig(engine string, version string) tea.Cmd {
 	return func() tea.Msg {
 		engines, err := mgmt.GetAvailableEngines(engine)
 
@@ -17,29 +23,48 @@ func fetchEngineConfig(engine string) tea.Cmd {
 			return errorMsg{err}
 		}
 
-		instances := make([]mgmt.EngineInstance, 0)
+		instances := make([]engineInstance, 0)
+		vers, err := mgmt.ParseVersion(version, mgmt.DotVersionStyle)
 
 		for _, engine := range *engines {
-			for _, inst := range engine.GetInstances() {
-				instances = append(instances, inst)
+			for _, vari := range engine.Variations {
+				if err == nil && (vers.Major != vari.Version.Major || vers.Minor != vari.Version.Minor || vers.Patch != vari.Version.Patch) {
+					continue
+				}
+
+				for _, flav := range vari.Flavours {
+					instances = append(instances, engineInstance{
+						name:    engine.Name,
+						version: vari.Version,
+						flavour: flav,
+					})
+				}
 			}
 		}
 
-		return engineUpdateMsg{instances}
+		return engineUpdateMsg{
+			engines: instances,
+		}
 	}
 }
 
 // downloadEngine creates a command that downloads the given engine and returns
 // an engineDownloadedMsg with the result.
-func downloadEngine(e *mgmt.EngineInstance) tea.Cmd {
+func downloadEngine(e *engineInstance) tea.Cmd {
 	return func() tea.Msg {
-		err := mgmt.DownloadEngine(e)
+		inst := mgmt.EngineInstance{
+			Engine:  e.name,
+			Version: e.version,
+			Id:      e.flavour.Id,
+		}
+
+		err := mgmt.DownloadEngine(&inst)
 
 		if err != nil {
 			return errorMsg{err}
 		}
 
-		return engineDownloadedMsg{e}
+		return engineDownloadedMsg{&inst}
 	}
 }
 
