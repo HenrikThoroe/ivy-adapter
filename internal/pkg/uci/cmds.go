@@ -12,7 +12,7 @@ func (u *UCI) Setup() {
 	u.header = u.engine.Line()
 	u.engine.Send("uci")
 
-	u.engine.Scan("uciok", func(line string) bool {
+	u.engine.Read(func(line string) bool {
 		if strings.HasPrefix(line, "option") {
 			opt, e := parseOptionConfigStr(line)
 
@@ -43,12 +43,20 @@ func (u *UCI) Quit() {
 // SetPosition sends the position command to the engine with fen being
 // the starting position and moves being the moves to be played.
 func (u *UCI) SetPosition(fen string, moves ...string) {
-	u.engine.Send("position fen " + fen + " moves " + strings.Join(moves, " "))
+	if len(moves) == 0 {
+		u.engine.Send("position fen " + fen)
+	} else {
+		u.engine.Send("position fen " + fen + " moves " + strings.Join(moves, " "))
+	}
 }
 
 // SetMoves is equal to SetPosition with fen being the standard starting position.
 func (u *UCI) SetMoves(moves ...string) {
-	u.engine.Send("position startpos moves " + strings.Join(moves, " "))
+	if len(moves) == 0 {
+		u.engine.Send("position startpos")
+	} else {
+		u.engine.Send("position startpos moves " + strings.Join(moves, " "))
+	}
 }
 
 // GetMove sends the go command to the engine with movetime being the time
