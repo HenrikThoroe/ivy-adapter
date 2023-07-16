@@ -83,8 +83,8 @@ type OptionConfig struct {
 
 // New returns a new UCI struct.
 // It launches the engine and returns a connection to it.
-func New(e *mgmt.EngineInstance) (*UCI, error) {
-	conn, err := e.Launch()
+func New(e *mgmt.EngineInstance, scb func(string), rcb func(string)) (*UCI, error) {
+	conn, err := e.Launch(scb, rcb)
 
 	if err != nil {
 		return nil, err
