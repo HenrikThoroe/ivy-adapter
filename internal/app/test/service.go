@@ -30,6 +30,7 @@ type startMsg struct {
 type gameMsg struct {
 	gameCount int
 	moves     []testflow.GameMoveHistory
+	logs      []testflow.Log
 }
 
 type testService struct {
@@ -117,9 +118,8 @@ func (ts testService) awaitGameStart() tea.Msg {
 func (ts testService) isGameOver(info *uci.MoveInfo) bool {
 	noMove := info.Move == "(none)"
 	mate := info.Score.Type == uci.Mate && info.Score.Value == 1
-	cp := info.Score.Type == uci.CP && info.Score.Value > 1000
 
-	return noMove || mate || cp
+	return noMove || mate
 }
 
 func (ts testService) getConcurrency(options [2]options) int {
@@ -164,6 +164,7 @@ func (ts testService) dispatchGames(batch int, data *data) tea.Msg {
 			active--
 			result.gameCount += msg.gameCount
 			result.moves = append(result.moves, msg.moves...)
+			result.logs = append(result.logs, msg.logs...)
 		case err := <-errChan:
 			return err
 		}
@@ -196,9 +197,27 @@ func (ts testService) playGame(data *data) tea.Msg {
 	moveIdx := 0
 	engineIdx := 0
 	history := make([][]uci.MoveInfo, 2)
+	logs := make([][]testflow.LogEntry, 2)
 
 	for idx, e := range data.engines {
-		u, err := uci.New(&e)
+		logs[idx] = make([]testflow.LogEntry, 0, 1024)
+		log := &logs[idx]
+
+		scb := func(send string) {
+			*log = append(*log, testflow.LogEntry{
+				Type:  "send",
+				Value: send,
+			})
+		}
+
+		rcb := func(recv string) {
+			*log = append(*log, testflow.LogEntry{
+				Type:  "recv",
+				Value: recv,
+			})
+		}
+
+		u, err := uci.New(&e, scb, rcb)
 
 		if err != nil {
 			return err
@@ -242,5 +261,6 @@ func (ts testService) playGame(data *data) tea.Msg {
 	return gameMsg{
 		gameCount: 1,
 		moves:     []testflow.GameMoveHistory{history},
+		logs:      []testflow.Log{logs},
 	}
 }

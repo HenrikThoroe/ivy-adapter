@@ -42,7 +42,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case gameMsg:
 		m.data.state = wait
 		m.data.played += msg.gameCount
-		m.service.client.Commands <- testflow.BuildReportCmd(m.data.session, msg.moves)
+		m.service.client.Commands <- testflow.BuildReportCmd(m.data.session, msg.moves, msg.logs)
 		return m, m.service.awaitGameStart
 	}
 
