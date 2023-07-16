@@ -11,12 +11,22 @@ import (
 // GameMoveHistory is a slice of moves for a single game.
 type GameMoveHistory [][]uci.MoveInfo
 
+// LogEntry is a struct that represents a single log entry.
+type LogEntry struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
+
+// Log is a slice of log entries.
+type Log [][]LogEntry
+
 // ReportCmd is a struct that represents a report command.
 // This command is used to report the results of a batch of games.
 type ReportCmd struct {
 	Key     string            `json:"command"`
 	Session string            `json:"session"`
 	Moves   []GameMoveHistory `json:"moves"`
+	Logs    []Log             `json:"logs"`
 }
 
 // RegisterCmd is a struct that represents a register command.
@@ -52,11 +62,12 @@ func BuildRegisterCmd() RegisterCmd {
 }
 
 // BuildReportCmd returns a ReportCmd with the given parameters.
-func BuildReportCmd(session string, moves []GameMoveHistory) ReportCmd {
+func BuildReportCmd(session string, moves []GameMoveHistory, logs []Log) ReportCmd {
 	return ReportCmd{
 		Key:     "report",
 		Session: session,
 		Moves:   moves,
+		Logs:    logs,
 	}
 }
 
