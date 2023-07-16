@@ -50,7 +50,12 @@ func (conn *Connection) Line() string {
 // filter function returns true, the function returns.
 func (conn *Connection) Scan(cmd string, filter func(resp string) bool) {
 	conn.in <- cmd
+	conn.Read(filter)
+}
 
+// Read reads the responses from the engine until the filter function returns
+// true.
+func (conn *Connection) Read(filter func(resp string) bool) {
 	for resp := range conn.out {
 		if filter(resp) {
 			return
