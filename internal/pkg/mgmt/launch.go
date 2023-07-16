@@ -10,7 +10,7 @@ import (
 // Launch launches the engine instance and returns a connection to it.
 // The connection is used to communicate with the engine using channels.
 // If the engine instance could not be launched, an error is returned and the connection is nil.
-func (e *EngineInstance) Launch() (*Connection, error) {
+func (e *EngineInstance) Launch(scb func(string), rcb func(string)) (*Connection, error) {
 	path := e.Path()
 	proc := exec.Command(path)
 
@@ -26,26 +26,35 @@ func (e *EngineInstance) Launch() (*Connection, error) {
 		return nil, e
 	}
 
-	return bind(proc.Process.Pid, in, out, inPipe, outPipe), nil
+	return bind(proc.Process.Pid, in, out, inPipe, outPipe, scb, rcb), nil
 }
 
-func bind(pid int, in chan string, out chan string, wr io.Writer, rd io.Reader) *Connection {
-	go distribute(in, wr)
-	go listen(rd, out)
+func bind(pid int, in chan string, out chan string, wr io.Writer, rd io.Reader, scb func(string), rcb func(string)) *Connection {
+	go distribute(in, wr, scb)
+	go listen(rd, out, rcb)
 
 	return &Connection{in, out, pid}
 }
 
-func distribute(in chan string, wr io.Writer) {
+func distribute(in chan string, wr io.Writer, cb func(string)) {
 	for cmd := range in {
 		wr.Write([]byte(cmd + "\n"))
+
+		if cb != nil {
+			cb(cmd)
+		}
 	}
 }
 
-func listen(rd io.Reader, out chan string) {
+func listen(rd io.Reader, out chan string, cb func(string)) {
 	scanner := bufio.NewScanner(rd)
 
 	for scanner.Scan() {
-		out <- scanner.Text()
+		text := scanner.Text()
+		out <- text
+
+		if cb != nil {
+			cb(text)
+		}
 	}
 }
