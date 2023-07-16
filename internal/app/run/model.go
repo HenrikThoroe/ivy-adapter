@@ -33,7 +33,7 @@ func (m model) isGameOver() bool {
 }
 
 func initModel(g string, c string, e *mgmt.EngineInstance) *model {
-	engine, err := uci.New(e)
+	engine, err := uci.New(e, nil, nil)
 
 	if err != nil {
 		return &model{gameData: &data{err: err}}
