@@ -3,7 +3,6 @@ package test
 import (
 	"errors"
 	"math"
-	"math/rand"
 	"runtime"
 	"strconv"
 
@@ -179,7 +178,7 @@ func (ts testService) dispatchGames(batch int, data *data) tea.Msg {
 }
 
 func (ts testService) awaitGame(msg chan gameMsg, err chan error, data *data) {
-	resp := ts.playGame(data)
+	resp := ts.playGamePair(data)
 
 	switch resp := resp.(type) {
 	case error:
@@ -189,7 +188,39 @@ func (ts testService) awaitGame(msg chan gameMsg, err chan error, data *data) {
 	}
 }
 
-func (ts testService) playGame(data *data) tea.Msg {
+func (ts testService) playGamePair(data *data) tea.Msg {
+	result := gameMsg{
+		gameCount: 0,
+		moves:     []testflow.GameMoveHistory{},
+		logs:      []testflow.Log{},
+	}
+
+	resp1 := ts.playGame(data, false)
+
+	switch resp1 := resp1.(type) {
+	case error:
+		return resp1
+	case gameMsg:
+		result.gameCount += resp1.gameCount
+		result.moves = append(result.moves, resp1.moves...)
+		result.logs = append(result.logs, resp1.logs...)
+	}
+
+	resp2 := ts.playGame(data, true)
+
+	switch resp2 := resp2.(type) {
+	case error:
+		return resp2
+	case gameMsg:
+		result.gameCount += resp2.gameCount
+		result.moves = append(result.moves, resp2.moves...)
+		result.logs = append(result.logs, resp2.logs...)
+	}
+
+	return result
+}
+
+func (ts testService) playGame(data *data, swapColor bool) tea.Msg {
 	ifc := [2]*uci.UCI{}
 	maxMoves := 250
 	moves := make([]string, 0, maxMoves)
@@ -226,7 +257,7 @@ func (ts testService) playGame(data *data) tea.Msg {
 		ifc[idx] = u
 	}
 
-	if rand.Intn(2) == 0 {
+	if swapColor {
 		engineIdx = 1
 	}
 
