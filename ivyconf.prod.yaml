@@ -1,0 +1,17 @@
+engine-store: ./.dev/engines
+evc:
+  host: api.ivy-chess.com/evc
+  port: 0
+  secure: true
+game:
+  host: api.ivy-chess.com/gm/ws
+  port: 0
+  secure: true
+game-manager:
+  host: api.ivy-chess.com/gm
+  port: 0
+  secure: true
+test:
+  host: api.ivy-chess.com/test-driver/ws
+  port: 0
+  secure: true
