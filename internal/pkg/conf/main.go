@@ -107,6 +107,7 @@ func GetGameManagerConfig() *ServerConfig {
 // (http(s?)|ws(s?))://<host>:<port>
 func (sc *ServerConfig) GetURL() string {
 	protocol := "http"
+	port := ""
 
 	if sc == &gameServer || sc == &test {
 		protocol = "ws"
@@ -116,7 +117,11 @@ func (sc *ServerConfig) GetURL() string {
 		protocol += "s"
 	}
 
-	return protocol + "://" + sc.Host + ":" + strconv.Itoa(sc.Port)
+	if sc.Port > 0 {
+		port = ":" + strconv.Itoa(sc.Port)
+	}
+
+	return protocol + "://" + sc.Host + port
 }
 
 // initServerConfig initializes the configuration of a server.
