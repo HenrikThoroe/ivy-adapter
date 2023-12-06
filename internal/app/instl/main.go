@@ -5,6 +5,7 @@
 package instl
 
 import (
+	"github.com/HenrikThoroe/ivy-adapter/internal/pkg/mgmt"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -12,6 +13,8 @@ import (
 // It takes the engine and version as arguments. If the engine is not specified,
 // the user will be prompted to select one. If the version is not specified, the
 // user will be prompted to select one.
-func BuildInstallationViewModel(engine string, version string) tea.Model {
-	return initModel(engine, version)
+func BuildInstallationViewModel(engine string, version string) (tea.Model, *mgmt.EngineInstance) {
+	model := initModel(engine, version)
+
+	return model, model.downloadedEngine
 }

@@ -24,12 +24,14 @@ var installCmd = &cobra.Command{
 	Long:  `Installs an engine which is managed by the 'Engine Version Control' system. Use q or ctrl+c to exit at any time.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		model := instl.BuildInstallationViewModel(installFlags.engine, installFlags.version)
+		model, engine := instl.BuildInstallationViewModel(installFlags.engine, installFlags.version)
 
 		if _, err := tea.NewProgram(model).Run(); err != nil {
 			fmt.Println("Error running program: ", err)
 			os.Exit(1)
 		}
+
+		fmt.Println("Path to engine binary: ", engine.Path())
 	},
 }
 

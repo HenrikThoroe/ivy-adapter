@@ -57,6 +57,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tick()
 	case engineDownloadedMsg:
 		m.isLoading = false
+		m.downloadedEngine.Engine = msg.engine.Engine
+		m.downloadedEngine.Version = msg.engine.Version
+		m.downloadedEngine.Id = msg.engine.Id
 		return m, tea.Quit
 	case tea.KeyMsg:
 		switch msg.String() {
