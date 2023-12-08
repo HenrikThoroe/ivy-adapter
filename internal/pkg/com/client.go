@@ -30,6 +30,9 @@ type Client struct {
 
 	// flow is the flow that is used to parse messages.
 	flow Flow
+
+	// conn is the websocket connection.
+	conn *websocket.Conn
 }
 
 // Connect establishes a connection to the game management server based on the configuration in the environment.
@@ -49,12 +52,18 @@ func Connect(url string, flow Flow) (*Client, error) {
 		Errors:   errChan,
 		ping:     -1,
 		flow:     flow,
+		conn:     conn,
 	}
 
 	go handleReceive(msgChan, errChan, conn, flow)
 	go handleSend(cmdChan, errChan, conn, &client.ping)
 
 	return &client, nil
+}
+
+// Close closes the connection to the server.
+func (c Client) Close() error {
+	return c.conn.Close()
 }
 
 // Ping returns the last measured ping to the server.
@@ -75,7 +84,7 @@ func handleSend(cmdChan chan Command, errChan chan error, conn *websocket.Conn, 
 
 		if err := conn.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
 			errChan <- err
-			continue
+			break
 		}
 
 		end := time.Now().UnixMilli()
@@ -89,14 +98,14 @@ func handleReceive(msgChan chan any, errChan chan error, conn *websocket.Conn, f
 
 		if err != nil {
 			errChan <- err
-			continue
+			break
 		}
 
 		data := map[string]any{}
 
 		if err := json.Unmarshal(message, &data); err != nil {
 			errChan <- err
-			continue
+			break
 		}
 
 		key := data["key"]
@@ -104,7 +113,7 @@ func handleReceive(msgChan chan any, errChan chan error, conn *websocket.Conn, f
 
 		if e != nil {
 			errChan <- e
-			continue
+			break
 		}
 
 		msgChan <- d
