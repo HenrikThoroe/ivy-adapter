@@ -12,6 +12,13 @@ import (
 // If the engine instance could not be launched, an error is returned and the connection is nil.
 func (e *EngineInstance) Launch(scb func(string), rcb func(string)) (*Connection, error) {
 	path := e.Path()
+	return LaunchEngine(path, scb, rcb)
+}
+
+// LaunchEngine launches an engine executable at the given path and returns a connection to it.
+// The connection is used to communicate with the engine using channels.
+// If the engine instance could not be launched, an error is returned and the connection is nil.
+func LaunchEngine(path string, scb func(string), rcb func(string)) (*Connection, error) {
 	proc := exec.Command(path)
 
 	inPipe, _ := proc.StdinPipe()
