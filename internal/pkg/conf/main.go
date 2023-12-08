@@ -45,12 +45,17 @@ var (
 //
 // This function should be called before any other function in this package
 // to ensure that the configuration is loaded.
-func Load() {
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("$IVY_PATH/Ivy")
-	viper.AddConfigPath("$HOME/Ivy")
-	viper.SetConfigType("yaml")
-	viper.SetConfigName("ivyconf")
+func Load(path string) {
+	if path == "" {
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("$IVY_PATH/Ivy")
+		viper.AddConfigPath("$HOME/Ivy")
+		viper.SetConfigType("yaml")
+		viper.SetConfigName("ivyconf")
+	} else {
+		viper.SetConfigFile(path)
+	}
+
 	viper.ReadInConfig()
 
 	initServerConfig(&evc, "evc", "localhost", 4500, false)

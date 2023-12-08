@@ -14,6 +14,7 @@ type _runFlags struct {
 	exe     string
 	engine  string
 	version string
+	config  string
 }
 
 var runFlags _runFlags
@@ -27,7 +28,7 @@ var runCmd = &cobra.Command{
 		"The output from the engine and all prompts to the engine will be printed to the console.\n",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		conf.Load()
+		conf.Load(runFlags.config)
 
 		ifc, stdin, stdout, err := run.SetupEngineIfc(runFlags.exe, runFlags.engine, runFlags.version)
 
@@ -56,8 +57,7 @@ func init() {
 	runCmd.Flags().StringVarP(&runFlags.exe, "binary", "b", "", "Path to engine executable")
 	runCmd.Flags().StringVarP(&runFlags.engine, "engine", "e", "", "Engine Name (must be installed)")
 	runCmd.Flags().StringVarP(&runFlags.version, "version", "v", "", "Version of Engine (must be installed)")
+	runCmd.Flags().StringVarP(&runFlags.config, "config", "c", "", "The path to the configuration file")
 
 	runCmd.MarkFlagRequired("player")
-
-	conf.Load()
 }

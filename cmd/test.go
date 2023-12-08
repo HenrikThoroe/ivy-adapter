@@ -10,6 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type _testFlags struct {
+	config string
+}
+
+var testFlags _testFlags
+
 var testCmd = &cobra.Command{
 	Use:   "test",
 	Short: "Run headless tests and sync with server",
@@ -19,6 +25,7 @@ var testCmd = &cobra.Command{
 		"The number of games played depends on the number of cores and memory available on the system.\n" +
 		"Use q or ctrl+c to exit at any time.",
 	Run: func(cmd *cobra.Command, args []string) {
+		conf.Load(testFlags.config)
 		model := test.BuildTestViewModel()
 
 		if _, err := tea.NewProgram(model).Run(); err != nil {
@@ -30,5 +37,5 @@ var testCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(testCmd)
-	conf.Load()
+	testCmd.Flags().StringVarP(&testFlags.config, "config", "c", "", "The path to the configuration file")
 }
