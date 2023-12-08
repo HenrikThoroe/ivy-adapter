@@ -96,6 +96,21 @@ func New(e *mgmt.EngineInstance, scb func(string), rcb func(string)) (*UCI, erro
 	}, nil
 }
 
+// NewFromExe returns a new UCI struct.
+// It launches the engine at the given path and returns a connection to it.
+func NewFromExe(exe string, scb func(string), rcb func(string)) (*UCI, error) {
+	conn, err := mgmt.LaunchEngine(exe, scb, rcb)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &UCI{
+		engine:  conn,
+		options: make([]OptionConfig, 0),
+	}, nil
+}
+
 // Close kills the engine process.
 func (uci *UCI) Close() {
 	proc, err := os.FindProcess(uci.engine.Pid)
