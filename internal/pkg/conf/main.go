@@ -53,6 +53,10 @@ func Load(path string) {
 		viper.SetConfigType("yaml")
 		viper.SetConfigName("ivyconf")
 	} else {
+		if _, err := os.Stat(path); err != nil {
+			panic("Configuration file not found: " + path)
+		}
+
 		viper.SetConfigFile(path)
 	}
 
