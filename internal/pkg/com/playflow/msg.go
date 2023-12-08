@@ -5,11 +5,6 @@ import (
 	"errors"
 )
 
-type time_t struct {
-	White int `json:"white"`
-	Black int `json:"black"`
-}
-
 type Flow struct {
 }
 
@@ -22,16 +17,10 @@ func NewFlow() Flow {
 // The key is used to determine the type of the message.
 func (f Flow) Parse(key string, data []byte) (any, error) {
 	switch key {
-	case "move-request":
+	case "move-req-msg":
 		return parse[MoveRequestMsg](data)
-	case "player-info":
-		return parse[PlayerInfoMsg](data)
-	case "game-state":
-		return parse[GameStateMsg](data)
-	case "error":
-		return parse[ErrorMsg](data)
-	case "pong":
-		return parse[PongMsg](data)
+	case "update-msg":
+		return parse[UpdateMsg](data)
 	default:
 		return nil, errors.New("invalid key")
 	}
@@ -43,44 +32,15 @@ func parse[T any](data []byte) (T, error) {
 	return m, err
 }
 
-// MoveRequestMsg is a message sent by the server to request a move from the
-// client.
 type MoveRequestMsg struct {
-	Key         string   `json:"key"`
-	PlayerColor string   `json:"playerColor"`
-	Moves       []string `json:"moves"`
-	Time        time_t   `json:"time"`
+	Key     string   `json:"key"`
+	History []string `json:"history"`
+	Time    int      `json:"time"`
+	Start   string   `json:"start"`
 }
 
-// PlayerInfoMsg is a message sent by the server to inform the client about
-// the player's color and id.
-type PlayerInfoMsg struct {
-	Key    string `json:"key"`
-	Player string `json:"player"`
-	Color  string `json:"color"`
-	Game   string `json:"game"`
-}
-
-// GameStateMsg is a message sent by the server to inform the client about
-// the current state of the game.
-type GameStateMsg struct {
-	Key         string   `json:"key"`
-	PlayerColor string   `json:"playerColor"`
-	Moves       []string `json:"moves"`
-	Time        time_t   `json:"time"`
-	State       string   `json:"state"`
-	Winner      string   `json:"winner"`
-	Reason      string   `json:"reason"`
-}
-
-// ErrorMsg is a message sent by the server to inform the client about an
-// error that occurred.
-type ErrorMsg struct {
-	Key     string `json:"key"`
-	Message string `json:"message"`
-}
-
-// PongMsg is a message sent by the client to the server to respond to a ping.
-type PongMsg struct {
-	Key string `json:"key"`
+type UpdateMsg struct {
+	Key     string   `json:"key"`
+	History []string `json:"history"`
+	Start   string   `json:"start"`
 }
