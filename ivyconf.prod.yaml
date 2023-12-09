@@ -4,7 +4,7 @@ evc:
   port: 0
   secure: true
 game:
-  host: api.ivy-chess.com/gm/ws
+  host: api.ivy-chess.com/gm/player
   port: 0
   secure: true
 game-manager:
